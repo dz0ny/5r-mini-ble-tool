@@ -1,0 +1,12 @@
+*.apk
+*.bin
+*.csv
+*.json
+*frequencies*
+*frequency-export*
+*memory-read*
+*memory-written*
+*memory-dump*
+*provision*.yaml
+work/
+outputs/

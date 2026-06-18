@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if command -v node >/dev/null 2>&1; then
+  exec node "$ROOT/cli.mjs" "$@"
+fi
+
+BUNDLED_NODE="$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node"
+if [ -x "$BUNDLED_NODE" ]; then
+  exec "$BUNDLED_NODE" "$ROOT/cli.mjs" "$@"
+fi
+
+echo "Node.js is required. Install node or run inside Codex with the bundled runtime available." >&2
+exit 127
