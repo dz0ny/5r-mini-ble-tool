@@ -90,6 +90,8 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
   const [logoText, setLogoText] = useState(saved.logoText || "BAOFENG");
   const [subText, setSubText] = useState(saved.subText || "UV-5R Mini");
   const [iconText, setIconText] = useState(saved.iconText || "📻");
+  const [bgTop, setBgTop] = useState(saved.bgTop || "#0b0e13");
+  const [bgBottom, setBgBottom] = useState(saved.bgBottom || "#0b0e13");
   const [designKey, setDesignKey] = useState(saved.designKey || "signal");
   const [pixelFormat, setPixelFormat] = useState(saved.pixelFormat || "rgb565le");
   const [invertPixels, setInvertPixels] = useState(Boolean(saved.invertPixels));
@@ -97,8 +99,8 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
   const bootTarget = getBootTarget(bootTargetKey);
 
   useEffect(() => {
-    saveBootLogoPrefs({ armed, bootTargetKey, designKey, iconText, invertPixels, logoText, pixelFormat, subText });
-  }, [armed, bootTargetKey, designKey, iconText, invertPixels, logoText, pixelFormat, subText]);
+    saveBootLogoPrefs({ armed, bgBottom, bgTop, bootTargetKey, designKey, iconText, invertPixels, logoText, pixelFormat, subText });
+  }, [armed, bgBottom, bgTop, bootTargetKey, designKey, iconText, invertPixels, logoText, pixelFormat, subText]);
 
   useEffect(() => {
     const pending = pendingPreviewRef.current;
@@ -116,9 +118,10 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
 
   function renderTextLogo(options = {}) {
     const args = options && !options.currentTarget ? options : {};
-    const { silent = false, target = bootTarget, format = pixelFormat, invert = invertPixels, designKey: selectedDesignKey = designKey, mainText = logoText, smallText = subText, glyph = iconText } = args;
+    const { silent = false, target = bootTarget, format = pixelFormat, invert = invertPixels, designKey: selectedDesignKey = designKey, mainText = logoText, smallText = subText, glyph = iconText, bgStart = bgTop, bgEnd = bgBottom } = args;
     const renderTarget = Number.isFinite(target?.width) && Number.isFinite(target?.height) ? target : bootTarget;
-    const design = getLogoDesign(selectedDesignKey);
+    const baseDesign = getLogoDesign(selectedDesignKey);
+    const design = selectedDesignKey === "custom" ? { ...baseDesign, colors: [bgStart, bgEnd] } : baseDesign;
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.width = renderTarget.width;
@@ -219,7 +222,7 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
       <div class="boot-logo-layout">
         <div class="boot-logo-preview"><canvas ref=${canvasRef} width=${bootTarget.width} height=${bootTarget.height}></canvas></div>
         <div class="wizard-grid">
-          <div class="wizard-step boot-text-tool"><strong>1. Make text logo</strong><p>Enter a radio name, choose a visual design, and render it into the preview. The Custom design swaps the icon for any emoji or text you type below.</p><label>Main text<input value=${logoText} maxlength="18" onInput=${(e) => { setLogoText(e.target.value); renderTextLogo({ silent: true, mainText: e.target.value }); }} /></label><label>Small text<input value=${subText} maxlength="18" onInput=${(e) => { setSubText(e.target.value); renderTextLogo({ silent: true, smallText: e.target.value }); }} /></label><label>Symbol / emoji<input value=${iconText} maxlength="12" placeholder="📻 or text" onInput=${(e) => { setIconText(e.target.value); renderTextLogo({ silent: true, glyph: e.target.value }); }} /></label><label>Design<select value=${designKey} onChange=${(e) => updateDesign(e.target.value)}>${LOGO_DESIGNS.map((design) => html`<option value=${design.key}>${design.name}</option>`)}</select></label><button class="secondary" type="button" onClick=${() => renderTextLogo()}>Render Text Logo</button><button class="secondary" type="button" onClick=${renderColorBars}>Render Color Bars</button></div>
+          <div class="wizard-step boot-text-tool"><strong>1. Make text logo</strong><p>Enter a radio name, choose a visual design, and render it into the preview. Pick the Custom design to set your own emoji/text icon and background colors.</p><label>Main text<input value=${logoText} maxlength="18" onInput=${(e) => { setLogoText(e.target.value); renderTextLogo({ silent: true, mainText: e.target.value }); }} /></label><label>Small text<input value=${subText} maxlength="18" onInput=${(e) => { setSubText(e.target.value); renderTextLogo({ silent: true, smallText: e.target.value }); }} /></label><label>Design<select value=${designKey} onChange=${(e) => updateDesign(e.target.value)}>${LOGO_DESIGNS.map((design) => html`<option value=${design.key}>${design.name}</option>`)}</select></label>${designKey === "custom" ? html`<label>Symbol / emoji<input value=${iconText} maxlength="12" placeholder="📻 or text" onInput=${(e) => { setIconText(e.target.value); renderTextLogo({ silent: true, glyph: e.target.value }); }} /></label><div class="bg-pickers"><label>Background top<input type="color" value=${bgTop} onInput=${(e) => { setBgTop(e.target.value); renderTextLogo({ silent: true, bgStart: e.target.value }); }} /></label><label>Background bottom<input type="color" value=${bgBottom} onInput=${(e) => { setBgBottom(e.target.value); renderTextLogo({ silent: true, bgEnd: e.target.value }); }} /></label></div>` : ""}<button class="secondary" type="button" onClick=${() => renderTextLogo()}>Render Text Logo</button><button class="secondary" type="button" onClick=${renderColorBars}>Render Color Bars</button></div>
           <div class="wizard-step"><strong>2. Export first</strong><p>Choose the pixel format, then export a copy before flashing.</p><label>Pixel format<select value=${pixelFormat} onChange=${(e) => updateFormat(e.target.value)}><option value="rgb565le">RGB565 little-endian</option><option value="rgb565be">RGB565 big-endian</option><option value="bgr565le">BGR565 little-endian</option><option value="bgr565be">BGR565 big-endian</option></select></label><label class="check"><input type="checkbox" checked=${invertPixels} onChange=${(e) => updateFormat(pixelFormat, e.target.checked)} />Invert pixels</label><button class="secondary" type="button" disabled=${!payload} onClick=${exportRaw}>Export RGB565</button><button class="secondary" type="button" disabled=${!payload} onClick=${exportPng}>Export Preview PNG</button></div>
           <div class="wizard-step"><strong>3. Write to radio</strong><p>Select the target profile first. Changing it resizes the preview and rebuilds the payload.</p><label>Boot target<select value=${bootTargetKey} onChange=${(e) => updateBootTarget(e.target.value)}>${BOOT_TARGETS.map((target) => html`<option value=${target.key}>${target.name}</option>`)}</select></label><label class="check"><input type="checkbox" checked=${armed} onChange=${(e) => setArmed(e.target.checked)} /> Arm boot-logo write</label><button class="danger" type="button" disabled=${!payload || !connected || busy || !armed} onClick=${writeLogo}>Write Boot Logo</button></div>
         </div>

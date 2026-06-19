@@ -92,6 +92,8 @@
       .boot-logo-preview { @apply grid min-h-44 place-items-center overflow-hidden rounded-md border border-zinc-200 bg-zinc-950 p-3; }
       .boot-logo-preview canvas { image-rendering: pixelated; @apply h-auto max-h-32 w-auto max-w-full rounded border border-zinc-700 bg-black; }
       .boot-text-tool { @apply content-start; }
+      .bg-pickers { @apply grid grid-cols-2 gap-2; }
+      .bg-pickers input[type="color"] { @apply h-7 w-full cursor-pointer p-0.5; }
       .danger-zone { @apply border-red-200 bg-red-50; }
       .hidden-file { @apply hidden; }
 
