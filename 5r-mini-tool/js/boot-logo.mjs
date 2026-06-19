@@ -114,60 +114,6 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
     renderTextLogo({ silent: true });
   }, [bootTargetKey]);
 
-  async function loadImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    try {
-      const bitmap = await createImageBitmap(file);
-      const canvas = canvasRef.current;
-      canvas.width = bootTarget.width;
-      canvas.height = bootTarget.height;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, bootTarget.width, bootTarget.height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      if (bootTarget.crop) {
-        const side = Math.min(bitmap.width, bitmap.height);
-        const sx = Math.floor((bitmap.width - side) / 2);
-        const sy = Math.floor((bitmap.height - side) / 2);
-        ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, bootTarget.width, bootTarget.height);
-      } else {
-        ctx.drawImage(bitmap, 0, 0, bootTarget.width, bootTarget.height);
-      }
-      const next = payloadFromCanvas(canvas, bootTarget, pixelFormat, invertPixels);
-      setPayload(next);
-      setFileName(file.name.replace(/\.[^.]+$/, ""));
-      setMessage(`Prepared ${next.length} bytes from ${file.name} as ${pixelFormatLabel(pixelFormat, invertPixels)}.`);
-      setStatus("Boot logo payload prepared", "ok");
-    } catch (error) {
-      setStatus(error.message, "err");
-      setMessage(error.message);
-    } finally {
-      event.target.value = "";
-    }
-  }
-
-  async function loadRawPayload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    try {
-      const next = new Uint8Array(await file.arrayBuffer());
-      const expectedLength = bootTarget.width * bootTarget.height * 2;
-      if (next.length !== expectedLength) throw new Error(`Raw boot logo must be ${expectedLength} bytes for ${bootTarget.name}`);
-      setPayload(next);
-      setFileName(file.name.replace(/\.[^.]+$/, ""));
-      paintPayloadPreview(canvasRef.current, next, bootTarget, pixelFormat, invertPixels);
-      setMessage(`Loaded ${next.length} raw RGB565 bytes from ${file.name}.`);
-      setStatus("Boot logo raw payload loaded", "ok");
-    } catch (error) {
-      setStatus(error.message, "err");
-      setMessage(error.message);
-    } finally {
-      event.target.value = "";
-    }
-  }
-
   function renderTextLogo(options = {}) {
     const args = options && !options.currentTarget ? options : {};
     const { silent = false, target = bootTarget, format = pixelFormat, invert = invertPixels, designKey: selectedDesignKey = designKey, mainText = logoText, smallText = subText, glyph = iconText } = args;
@@ -274,7 +220,6 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
         <div class="boot-logo-preview"><canvas ref=${canvasRef} width=${bootTarget.width} height=${bootTarget.height}></canvas></div>
         <div class="wizard-grid">
           <div class="wizard-step boot-text-tool"><strong>1. Make text logo</strong><p>Enter a radio name, choose a visual design, and render it into the preview. The Custom design swaps the icon for any emoji or text you type below.</p><label>Main text<input value=${logoText} maxlength="18" onInput=${(e) => { setLogoText(e.target.value); renderTextLogo({ silent: true, mainText: e.target.value }); }} /></label><label>Small text<input value=${subText} maxlength="18" onInput=${(e) => { setSubText(e.target.value); renderTextLogo({ silent: true, smallText: e.target.value }); }} /></label><label>Symbol / emoji<input value=${iconText} maxlength="12" placeholder="📻 or text" onInput=${(e) => { setIconText(e.target.value); renderTextLogo({ silent: true, glyph: e.target.value }); }} /></label><label>Design<select value=${designKey} onChange=${(e) => updateDesign(e.target.value)}>${LOGO_DESIGNS.map((design) => html`<option value=${design.key}>${design.name}</option>`)}</select></label><button class="secondary" type="button" onClick=${() => renderTextLogo()}>Render Text Logo</button><button class="secondary" type="button" onClick=${renderColorBars}>Render Color Bars</button></div>
-          <div class="wizard-step"><strong>Or import file</strong><p>Images are resized for the selected target. Raw files must match the target byte length.</p><label class="file-button">Choose Image<input class="hidden-file" type="file" accept="image/*" onChange=${loadImage} /></label><label class="file-button secondary">Import RGB565<input class="hidden-file" type="file" accept=".rgb565,.raw,.bin,application/octet-stream" onChange=${loadRawPayload} /></label></div>
           <div class="wizard-step"><strong>2. Export first</strong><p>Choose the pixel format, then export a copy before flashing.</p><label>Pixel format<select value=${pixelFormat} onChange=${(e) => updateFormat(e.target.value)}><option value="rgb565le">RGB565 little-endian</option><option value="rgb565be">RGB565 big-endian</option><option value="bgr565le">BGR565 little-endian</option><option value="bgr565be">BGR565 big-endian</option></select></label><label class="check"><input type="checkbox" checked=${invertPixels} onChange=${(e) => updateFormat(pixelFormat, e.target.checked)} />Invert pixels</label><button class="secondary" type="button" disabled=${!payload} onClick=${exportRaw}>Export RGB565</button><button class="secondary" type="button" disabled=${!payload} onClick=${exportPng}>Export Preview PNG</button></div>
           <div class="wizard-step"><strong>3. Write to radio</strong><p>Select the target profile first. Changing it resizes the preview and rebuilds the payload.</p><label>Boot target<select value=${bootTargetKey} onChange=${(e) => updateBootTarget(e.target.value)}>${BOOT_TARGETS.map((target) => html`<option value=${target.key}>${target.name}</option>`)}</select></label><label class="check"><input type="checkbox" checked=${armed} onChange=${(e) => setArmed(e.target.checked)} /> Arm boot-logo write</label><button class="danger" type="button" disabled=${!payload || !connected || busy || !armed} onClick=${writeLogo}>Write Boot Logo</button></div>
         </div>
