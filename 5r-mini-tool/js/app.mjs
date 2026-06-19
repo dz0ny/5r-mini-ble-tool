@@ -1,6 +1,6 @@
 import { html, render, useRef, useState } from "./preact.mjs?v=ani-sync";
 import { BleTransport } from "./ble-transport.mjs?v=boot-targets";
-import { BootLogoTab } from "./boot-logo.mjs?v=boot-serial-close";
+import { BootLogoTab } from "./boot-logo.mjs?v=custom-wizard";
 import { hexAddr, sleep } from "./format.mjs?v=ani-sync";
 import { PROTOCOL } from "./protocol.mjs?v=tool-copy";
 import { blockPayload, buildDefaultBlocks, cloneBlocks, countBlocks, normalizeBlock, validateBlocks } from "./memory.mjs?v=ani-sync";
