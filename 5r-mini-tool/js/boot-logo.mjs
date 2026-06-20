@@ -235,7 +235,16 @@ async function sendBootCommand(transport, cmd, packageId, payload, name, log, { 
   const packet = buildBootPacket(cmd, packageId, payload);
   transport.clearQueue();
   const serialFrame = transport.kind === "serial";
-  let response = await transport.sendBytes(packet, { expect: [0xa5], responseLength: 8, name, timeout, chunkSize: serialFrame ? "frame" : 20, chunkDelay: serialFrame ? 0 : 20, writeWithResponse: true, compactLog: true, logChunks: true, logResponse: true });
+  // The radio returns framed A5/CRC acks over the serial UART, but its BLE bridge
+  // does not surface them reliably (PROGRAM never answers and the flow stalls).
+  // So over BLE we fire-and-forget the boot commands, pacing only by chunk delay,
+  // which is the flow that historically produced correct BLE writes.
+  if (!serialFrame) {
+    await transport.sendBytes(packet, { expect: [], responseLength: 0, name, chunkSize: 20, chunkDelay: 20, writeWithResponse: true, compactLog: true, logChunks: true });
+    log(`${name}: sent (BLE, no response wait)`);
+    return new Uint8Array();
+  }
+  let response = await transport.sendBytes(packet, { expect: [0xa5], responseLength: 8, name, timeout, chunkSize: "frame", chunkDelay: 0, writeWithResponse: true, compactLog: true, logChunks: true, logResponse: true });
   if (response.length >= 6) {
     const need = 8 + ((response[4] << 8) | response[5]);
     if (response.length < need) {
