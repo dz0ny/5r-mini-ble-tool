@@ -52,6 +52,8 @@
       .conn-state .dot { @apply h-2 w-2 rounded-full bg-zinc-400; }
       .conn-state.on { @apply text-green-700; }
       .conn-state.on .dot { @apply bg-green-500; }
+      .connect-ops .split { @apply items-stretch gap-5; }
+      .connect-ops .op-col + .op-col { @apply border-l border-zinc-200 pl-5; }
       .advanced-panel { @apply mt-3 text-zinc-500; }
       .advanced-panel summary { @apply cursor-pointer text-sm font-medium text-zinc-700; }
       .advanced-panel .grid, .advanced-actions, .progress { @apply mt-3; }
@@ -128,6 +130,7 @@
       @media (max-width: 900px) {
         .top, .split, .wizard-head { @apply grid; }
         .grid, .split, .settings-layout, .goal-strip, .subgrid, .setting-card-top, .wizard-head, .wizard-grid, .boot-logo-layout, .connect-card { @apply grid-cols-1; }
+        .connect-ops .op-col + .op-col { @apply border-l-0 pl-0 border-t border-zinc-200 pt-4; }
       }
     }
   `;

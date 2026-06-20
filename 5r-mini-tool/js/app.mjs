@@ -8,7 +8,7 @@ import { ChannelsTab } from "./channels-tab.mjs?v=plain-channels-heading";
 import { RawTab } from "./components.mjs?v=ani-sync";
 import { DtmfTab } from "./dtmf-tab.mjs?v=ani-sync";
 import { applyProvisionYaml, blocksFromRawBin, blocksToRawBin, buildProvisionYaml } from "./import-export.mjs?v=ani-sync";
-import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=connect-redesign";
+import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=combined-panel";
 import { SerialTransport } from "./serial-transport.mjs?v=serial-close";
 import { SettingsTab } from "./settings-tab.mjs?v=settings-redesign";
 import { Tabs } from "./tabs.mjs?v=boot-logo";
@@ -293,8 +293,10 @@ function App() {
   return html`
     <main>
       <div class="top"><div><h1>BAOFENG UV-5R Mini BLE Tool</h1><p>Browser tool for reading, editing, importing, exporting, and writing radio memory.</p></div><span class=${`status ${status.type}`.trim()}>${status.text}</span></div>
-      <${ConnectionPanel} settings=${settings} setSettings=${setSettings} connected=${connected} busy=${busy} connect=${connect} disconnect=${disconnect} probe=${probeHandshake} />
-      <${OperationsPanel} canUseTransport=${canUseTransport} busy=${busy} readChannels=${readChannels} writeBack=${writeBack} stop=${() => { stopRequested.current = true; setStatus("Stopping after current response"); }} loadDefaults=${() => { setBlocks(cloneBlocks(DEFAULT_BLOCKS)); setStatus("Loaded blank template", "ok"); }} exportYaml=${exportYaml} importYaml=${importYaml} exportRawBin=${exportRawBin} importRawBin=${importRawBin} progress=${progress} settings=${settings} setSettings=${setSettings} />
+      <section class="connect-ops"><div class="split">
+        <${ConnectionPanel} settings=${settings} setSettings=${setSettings} connected=${connected} busy=${busy} connect=${connect} disconnect=${disconnect} probe=${probeHandshake} />
+        <${OperationsPanel} canUseTransport=${canUseTransport} busy=${busy} readChannels=${readChannels} writeBack=${writeBack} stop=${() => { stopRequested.current = true; setStatus("Stopping after current response"); }} loadDefaults=${() => { setBlocks(cloneBlocks(DEFAULT_BLOCKS)); setStatus("Loaded blank template", "ok"); }} exportYaml=${exportYaml} importYaml=${importYaml} exportRawBin=${exportRawBin} importRawBin=${importRawBin} progress=${progress} settings=${settings} setSettings=${setSettings} />
+      </div></section>
       <${Tabs} tab=${tab} setTab=${setTab} />
       ${tab === "channels" && html`<${ChannelsTab} blocks=${blocks} setBlocks=${setBlocks} pageStart=${pageStart} setPageStart=${setPageStart} />`}
       ${tab === "pmr" && html`<${PmrWizardTab} updateBlocks=${updateBlocks} pmrTone=${pmrTone} setPmrTone=${setPmrTone} pmrStartSlot=${pmrStartSlot} setPmrStartSlot=${setPmrStartSlot} pmrNamePrefix=${pmrNamePrefix} setPmrNamePrefix=${setPmrNamePrefix} pmrPower=${pmrPower} setPmrPower=${setPmrPower} pmrWidth=${pmrWidth} setPmrWidth=${setPmrWidth} pmrScan=${pmrScan} setPmrScan=${setPmrScan} pmrPttId=${pmrPttId} setPmrPttId=${setPmrPttId} pmrCallingScope=${pmrCallingScope} setPmrCallingScope=${setPmrCallingScope} pmrSignalCode=${pmrSignalCode} setPmrSignalCode=${setPmrSignalCode} setPageStart=${setPageStart} setTab=${setTab} setStatus=${setStatus} />`}
