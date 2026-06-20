@@ -39,7 +39,7 @@
 
       .connection-card { @apply mb-3 flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5; }
       .connection-card strong { @apply text-sm font-semibold; }
-      .connect-card { @apply mb-3 grid grid-cols-2 gap-4 rounded-md border border-zinc-200 bg-zinc-50 p-3; }
+      .connect-card { @apply mb-4 grid grid-cols-2 gap-6; }
       .connect-col { @apply grid content-start gap-1.5; }
       .col-head { @apply text-[11px] font-semibold uppercase tracking-wide text-zinc-500; }
       .col-meta { @apply text-[11px] leading-snug text-zinc-400; }
@@ -52,8 +52,9 @@
       .conn-state .dot { @apply h-2 w-2 rounded-full bg-zinc-400; }
       .conn-state.on { @apply text-green-700; }
       .conn-state.on .dot { @apply bg-green-500; }
-      .connect-ops .split { @apply items-stretch gap-5; }
-      .connect-ops .op-col + .op-col { @apply border-l border-zinc-200 pl-5; }
+      .connect-ops { @apply p-5; }
+      .connect-ops .split { @apply items-stretch gap-7; }
+      .connect-ops .op-col + .op-col { @apply border-l border-zinc-200 pl-7; }
       .advanced-panel { @apply mt-3 text-zinc-500; }
       .advanced-panel summary { @apply cursor-pointer text-sm font-medium text-zinc-700; }
       .advanced-panel .grid, .advanced-actions, .progress { @apply mt-3; }
