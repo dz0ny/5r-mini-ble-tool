@@ -1,4 +1,4 @@
-import { BASIC_SETTINGS, CRYPT_KEY, DTMF_CHARS, PMR_CHANNELS, PROTOCOL } from "./protocol.mjs?v=ani-sync";
+import { BASIC_SETTINGS, CRYPT_KEY, DTMF_CHARS, PMR_CHANNELS, PROTOCOL } from "./protocol.mjs?v=multimodel";
 import { hexAddr, parseByteValue, parseHexBytes, toHex } from "./format.mjs?v=ani-sync";
 
 export function buildDefaultBlocks() {

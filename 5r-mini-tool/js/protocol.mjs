@@ -1,8 +1,12 @@
 export const PROTOCOL = {
   setup: [
     { send: [0x50,0x52,0x4f,0x47,0x52,0x41,0x4d,0x43,0x4f,0x4c,0x4f,0x52,0x50,0x52,0x4f,0x55], expect: [0x06], responseLength: 1, name: "PROGRAMCOLORPROU" },
-    { send: [0x46], expect: [0x01], responseLength: 16, name: "range" },
-    { send: [0x4d], expect: [0x35], responseLength: 15, name: "model" },
+    // The PROGRAMCOLORPROU handshake above is the real gate. The range/model reads are
+    // model-specific (UV32/UV36 PRO, BF-K7 report different identifiers than the 5R Mini),
+    // so we drain their bytes without asserting the 5R-Mini-only first byte. This lets the
+    // whole COLORPRO (modelType 4) family share this identical channel codec.
+    { send: [0x46], expect: [], responseLength: 16, name: "range" },
+    { send: [0x4d], expect: [], responseLength: 15, name: "model" },
     { send: [0x53,0x45,0x4e,0x44,0x21,0x05,0x0d,0x01,0x01,0x01,0x04,0x11,0x08,0x05,0x0d,0x0d,0x01,0x11,0x0f,0x09,0x12,0x09,0x10,0x04,0x00], expect: [0x06], responseLength: 1, name: "SEND!" }
   ],
   readRanges: [[0x0000, 0x7cc0], [0x8000, 0x8040], [0x9000, 0x9040], [0xa000, 0xa1c0]],
@@ -12,6 +16,18 @@ export const PROTOCOL = {
   channelEnd: 0x7cff,
   channelRecordSize: 0x20
 };
+
+// Radios that share the 5R Mini protocol family (Ola Radio modelType 4, handshake
+// PROGRAMCOLORPROU, 115200 baud, byte-identical channel record layout). They all use the
+// PROTOCOL codec above for channel/settings read+write. `bands` is informational (from the
+// Ola APK model_config.json) and shown in the UI; it does not change the codec. Boot-logo
+// flashing is intentionally NOT claimed here — per-model screen dimensions are unverified.
+export const MODELS = [
+  { key: "5rmini", label: "UV-5R Mini", bands: "RX 136–174 / 350–520 MHz" },
+  { key: "uv32pro", label: "UV32 PRO", bands: "RX 136–174 / 220–260 / 360–520 MHz" },
+  { key: "uv36pro", label: "UV36 PRO", bands: "RX 136–174 / 220–260 / 360–520 MHz" },
+  { key: "bfk7", label: "BF-K7", bands: "RX 136–174 / 220–260 / 360–520 MHz" }
+];
 
 export const CRYPT_KEY = [0x43, 0x4f, 0x20, 0x37];
 export const DTMF_CHARS = "0123456789ABCD*#";

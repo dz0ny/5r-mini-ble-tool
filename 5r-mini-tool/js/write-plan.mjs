@@ -1,6 +1,6 @@
 import { hexAddr } from "./format.mjs?v=ani-sync";
 import { buildDefaultBlocks } from "./memory.mjs?v=ani-sync";
-import { PROTOCOL } from "./protocol.mjs?v=ani-sync";
+import { PROTOCOL } from "./protocol.mjs?v=multimodel";
 
 const DEFAULT_BLOCKS = buildDefaultBlocks();
 

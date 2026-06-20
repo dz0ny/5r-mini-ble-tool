@@ -1,4 +1,4 @@
-import { COMMON_TRANSPORTS } from "./protocol.mjs?v=ani-sync";
+import { COMMON_TRANSPORTS } from "./protocol.mjs?v=multimodel";
 import { cleanUuid, sleep, toHex } from "./format.mjs?v=ani-sync";
 
 export class BleTransport {

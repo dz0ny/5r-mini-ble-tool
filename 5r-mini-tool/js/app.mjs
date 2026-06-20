@@ -2,13 +2,13 @@ import { html, render, useRef, useState } from "./preact.mjs?v=ani-sync";
 import { BleTransport } from "./ble-transport.mjs?v=boot-targets";
 import { BootLogoTab } from "./boot-logo.mjs?v=boot-ble-fix";
 import { hexAddr, sleep } from "./format.mjs?v=ani-sync";
-import { PROTOCOL } from "./protocol.mjs?v=tool-copy";
+import { PROTOCOL } from "./protocol.mjs?v=multimodel";
 import { blockPayload, buildDefaultBlocks, cloneBlocks, countBlocks, normalizeBlock, validateBlocks } from "./memory.mjs?v=ani-sync";
 import { ChannelsTab } from "./channels-tab.mjs?v=plain-channels-heading";
 import { RawTab } from "./components.mjs?v=ani-sync";
 import { DtmfTab } from "./dtmf-tab.mjs?v=ani-sync";
 import { applyProvisionYaml, blocksFromRawBin, blocksToRawBin, buildProvisionYaml } from "./import-export.mjs?v=ani-sync";
-import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=serial-toggle";
+import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=multimodel";
 import { SerialTransport } from "./serial-transport.mjs?v=serial-close";
 import { SettingsTab } from "./settings-tab.mjs?v=settings-redesign";
 import { Tabs } from "./tabs.mjs?v=boot-logo";
@@ -29,6 +29,7 @@ function App() {
   const [progress, setProgress] = useState({ value: 0, max: 1, text: "Idle" });
   const [pageStart, setPageStart] = useState(0);
   const [settings, setSettings] = useState({
+    model: "5rmini",
     transportType: "ble",
     serviceUuid: "0000ffe0-0000-1000-8000-00805f9b34fb",
     nameFilter: "walkie",

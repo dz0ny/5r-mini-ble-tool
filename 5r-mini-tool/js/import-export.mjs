@@ -1,4 +1,4 @@
-import { BASIC_SETTINGS, PROTOCOL } from "./protocol.mjs?v=ani-sync";
+import { BASIC_SETTINGS, PROTOCOL } from "./protocol.mjs?v=multimodel";
 import { hexAddr } from "./format.mjs?v=ani-sync";
 import { blockPayload, buildDefaultBlocks, clearAllChannels, cloneBlocks, countBlocks, getChannelCapacity, getMembers, getSettings, parseChannel, updateChannelField, updateMemoryField } from "./memory.mjs?v=ani-sync";
 

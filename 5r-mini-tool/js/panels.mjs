@@ -1,8 +1,10 @@
 import { html } from "./preact.mjs?v=ani-sync";
 import { Input } from "./components.mjs?v=ani-sync";
+import { MODELS } from "./protocol.mjs?v=multimodel";
 
 export function ConnectionPanel({ settings, setSettings, connected, busy, connect, disconnect, probe }) {
   const update = (key) => (event) => setSettings((old) => ({ ...old, [key]: event.target.value }));
+  const activeModel = MODELS.find((m) => m.key === (settings.model || "5rmini")) || MODELS[0];
   const updateChecked = (key) => (event) => setSettings((old) => ({ ...old, [key]: event.target.checked }));
   const resetDefaults = () => setSettings((old) => ({
     ...old,
@@ -32,6 +34,12 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
       </div>
       <span class="pill">${isSerial ? "Web Serial" : "Wireless BLE"}</span>
     </div>
+    <label class="model-select">Radio model
+      <select value=${settings.model || "5rmini"} onChange=${update("model")} disabled=${connected || busy}>
+        ${MODELS.map((m) => html`<option value=${m.key}>${m.label}</option>`)}
+      </select>
+    </label>
+    <p class="model-bands">${activeModel.bands} · shares the UV-5R Mini channel protocol</p>
     <div class="actions connect-actions">
       <button onClick=${connect} disabled=${connected}>${isSerial ? "Connect Serial" : "Connect Bluetooth"}</button>
       <button class="secondary" onClick=${probe} disabled=${!connected || busy}>Test</button>

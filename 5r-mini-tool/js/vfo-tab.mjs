@@ -1,5 +1,5 @@
 import { html } from "./preact.mjs?v=ani-sync";
-import { STEPS } from "./protocol.mjs?v=ani-sync";
+import { STEPS } from "./protocol.mjs?v=multimodel";
 import { getVfos, updateMemoryField } from "./memory.mjs?v=ani-sync";
 import { MemoryInput, ValueSelect } from "./components.mjs?v=ani-sync";
 

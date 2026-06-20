@@ -39,6 +39,8 @@
 
       .connection-card { @apply mb-3 flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5; }
       .connection-card strong { @apply text-sm font-semibold; }
+      .model-select { @apply mb-1 max-w-xs; }
+      .model-bands { @apply mb-3 text-[11px] text-zinc-400; }
       .advanced-panel { @apply mt-3 text-zinc-500; }
       .advanced-panel summary { @apply cursor-pointer text-sm font-medium text-zinc-700; }
       .advanced-panel .grid, .advanced-actions, .progress { @apply mt-3; }

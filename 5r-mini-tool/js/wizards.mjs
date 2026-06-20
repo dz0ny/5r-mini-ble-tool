@@ -1,5 +1,5 @@
 import { html, useMemo } from "./preact.mjs?v=ani-sync";
-import { PMR_CHANNELS } from "./protocol.mjs?v=ani-sync";
+import { PMR_CHANNELS } from "./protocol.mjs?v=multimodel";
 import { fillPmrChannels, getChannelCapacity, labelMemberRange, parseChannel, setCallChannel, updateChannelField, updateMemoryField } from "./memory.mjs?v=ani-sync";
 import { Input } from "./components.mjs?v=ani-sync";
 
