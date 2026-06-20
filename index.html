@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BAOFENG UV-5R Mini BLE Tool</title>
   <link rel="icon" href="data:,">
-  <script src="./5r-mini-tool/tailwind-setup.js?v=roomier"></script>
+  <script src="./5r-mini-tool/tailwind-setup.js?v=compact2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body>
   <div id="app"></div>
+  <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
   <script type="module" src="./5r-mini-tool/js/app.mjs?v=combined-panel"></script>
 </body>
 </html>
