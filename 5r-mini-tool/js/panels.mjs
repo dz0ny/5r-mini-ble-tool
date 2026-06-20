@@ -25,21 +25,27 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
     rxIdle: "140"
   }));
   const isSerial = settings.transportType === "serial";
-  const setTransportType = (event) => setSettings((old) => ({ ...old, transportType: event.target.checked ? "serial" : "ble" }));
+  const setTransport = (value) => () => setSettings((old) => ({ ...old, transportType: value }));
+  const stateLabel = connected ? "Connected" : "Disconnected";
+  const stateClass = connected ? "on" : "off";
   return html`<section><h2>Connect Radio</h2>
-    <div class="connection-card">
-      <div>
-        <strong>Radio connection</strong>
-        <p>${isSerial ? "USB serial cable mode is enabled in advanced options." : "Scan for the radio and connect with the known default wireless settings."}</p>
+    <div class="connect-card">
+      <div class="connect-col">
+        <span class="col-head">Radio model</span>
+        <select value=${settings.model || "5rmini"} onChange=${update("model")} disabled=${connected || busy}>
+          ${MODELS.map((m) => html`<option value=${m.key}>${m.label}</option>`)}
+        </select>
+        <span class="col-meta">${activeModel.bands} · shares the UV-5R Mini protocol</span>
       </div>
-      <span class="pill">${isSerial ? "Web Serial" : "Wireless BLE"}</span>
+      <div class="connect-col">
+        <span class="col-head">Connection</span>
+        <div class="seg" role="radiogroup" aria-label="Transport">
+          <button type="button" role="radio" aria-checked=${!isSerial} class=${`seg-btn${isSerial ? "" : " active"}`} disabled=${connected || busy} onClick=${setTransport("ble")}>Bluetooth</button>
+          <button type="button" role="radio" aria-checked=${isSerial} class=${`seg-btn${isSerial ? " active" : ""}`} disabled=${connected || busy} onClick=${setTransport("serial")}>USB</button>
+        </div>
+        <span class=${`conn-state ${stateClass}`}><span class="dot"></span>${stateLabel}</span>
+      </div>
     </div>
-    <label class="model-select">Radio model
-      <select value=${settings.model || "5rmini"} onChange=${update("model")} disabled=${connected || busy}>
-        ${MODELS.map((m) => html`<option value=${m.key}>${m.label}</option>`)}
-      </select>
-    </label>
-    <p class="model-bands">${activeModel.bands} · shares the UV-5R Mini channel protocol</p>
     <div class="actions connect-actions">
       <button onClick=${connect} disabled=${connected}>${isSerial ? "Connect Serial" : "Connect Bluetooth"}</button>
       <button class="secondary" onClick=${probe} disabled=${!connected || busy}>Test</button>
@@ -47,9 +53,6 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
     </div>
     <details class="advanced-panel">
       <summary>Advanced connection options</summary>
-      <div class="actions advanced-actions">
-        <label class="check"><input type="checkbox" checked=${isSerial} disabled=${connected || busy} onChange=${setTransportType} />Use USB serial cable instead of Bluetooth</label>
-      </div>
       <div class="grid">
         ${isSerial ? html`
           <${Input} label="Baud rate" type="number" value=${settings.serialBaud || "115200"} onInput=${update("serialBaud")} />

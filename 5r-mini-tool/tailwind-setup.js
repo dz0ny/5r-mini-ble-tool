@@ -39,8 +39,19 @@
 
       .connection-card { @apply mb-3 flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5; }
       .connection-card strong { @apply text-sm font-semibold; }
-      .model-select { @apply mb-1 max-w-xs; }
-      .model-bands { @apply mb-3 text-[11px] text-zinc-400; }
+      .connect-card { @apply mb-3 grid grid-cols-2 gap-4 rounded-md border border-zinc-200 bg-zinc-50 p-3; }
+      .connect-col { @apply grid content-start gap-1.5; }
+      .col-head { @apply text-[11px] font-semibold uppercase tracking-wide text-zinc-500; }
+      .col-meta { @apply text-[11px] leading-snug text-zinc-400; }
+      .seg { @apply grid grid-cols-2 gap-1 rounded-md border border-zinc-200 bg-zinc-100 p-1; }
+      .seg-btn { @apply min-h-8 rounded-md border-transparent bg-transparent px-2.5 py-1.5 text-sm font-medium text-zinc-500 shadow-none transition hover:bg-white hover:text-zinc-900; }
+      .seg-btn.active { @apply bg-white text-zinc-950 shadow-xs hover:bg-white; }
+      .seg-btn:disabled { @apply cursor-not-allowed bg-transparent text-zinc-400 shadow-none hover:bg-transparent; }
+      .seg-btn.active:disabled { @apply bg-white text-zinc-500; }
+      .conn-state { @apply inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500; }
+      .conn-state .dot { @apply h-2 w-2 rounded-full bg-zinc-400; }
+      .conn-state.on { @apply text-green-700; }
+      .conn-state.on .dot { @apply bg-green-500; }
       .advanced-panel { @apply mt-3 text-zinc-500; }
       .advanced-panel summary { @apply cursor-pointer text-sm font-medium text-zinc-700; }
       .advanced-panel .grid, .advanced-actions, .progress { @apply mt-3; }
@@ -116,7 +127,7 @@
     @layer components {
       @media (max-width: 900px) {
         .top, .split, .wizard-head { @apply grid; }
-        .grid, .split, .settings-layout, .goal-strip, .subgrid, .setting-card-top, .wizard-head, .wizard-grid, .boot-logo-layout { @apply grid-cols-1; }
+        .grid, .split, .settings-layout, .goal-strip, .subgrid, .setting-card-top, .wizard-head, .wizard-grid, .boot-logo-layout, .connect-card { @apply grid-cols-1; }
       }
     }
   `;
