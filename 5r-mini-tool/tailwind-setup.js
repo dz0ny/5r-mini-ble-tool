@@ -10,11 +10,11 @@
       :root { color-scheme: light; }
       * { @apply box-border; }
       body { @apply m-0 bg-zinc-50 text-zinc-950 antialiased; }
-      main { width: min(1280px, calc(100vw - 32px)); @apply mx-auto my-5 grid gap-3; }
+      main { width: min(1280px, calc(100vw - 32px)); @apply mx-auto my-4 grid gap-2.5; }
       h1 { @apply m-0 text-2xl font-bold leading-tight; }
-      h2 { @apply mt-0 mb-3 text-sm font-semibold tracking-tight; }
+      h2 { @apply mt-0 mb-2 text-sm font-semibold tracking-tight; }
       p { @apply m-0 leading-relaxed text-zinc-500; }
-      section { @apply rounded-lg border border-zinc-200 bg-white p-4 shadow-sm; }
+      section { @apply rounded-lg border border-zinc-200 bg-white p-3.5 shadow-sm; }
       label { @apply grid gap-1.5 text-xs font-medium text-zinc-500; }
       input, select, textarea { @apply w-full rounded-md border border-zinc-200 bg-white px-2.5 py-2 font-mono text-sm leading-snug text-zinc-950 shadow-xs outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200; }
       button, .file-button { @apply inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-zinc-950 bg-zinc-950 px-3 py-2 text-sm font-medium text-white shadow-xs transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300; }
@@ -30,7 +30,7 @@
       button.danger { @apply border-red-600 bg-red-600 hover:bg-red-700; }
 
       .top { @apply flex items-end justify-between gap-4; }
-      .section-head { @apply mb-3 flex items-start justify-between gap-3; }
+      .section-head { @apply mb-2 flex items-start justify-between gap-3; }
       .section-head h2 { @apply mb-1; }
       .section-head p { @apply text-xs; }
       .grid { @apply grid grid-cols-4 gap-3; }
@@ -73,7 +73,7 @@
       .table-wrap { contain: content; overflow-anchor: none; @apply max-h-[520px] overflow-auto rounded-md border border-zinc-200; }
       .mini-table { @apply max-h-[360px]; }
       .channels-table { @apply table-fixed text-xs; }
-      .channels-table th, .channels-table td { overflow-anchor: none; @apply h-[30px] px-1 py-0.5; }
+      .channels-table th, .channels-table td { overflow-anchor: none; @apply h-[27px] px-1 py-0.5; }
       .channels-table th { @apply cursor-help text-[11px] underline decoration-dotted underline-offset-[3px]; }
       .channels-table input, .channels-table select { @apply h-6 min-h-6 px-1 py-0.5 text-xs leading-none; }
       .channels-table td input { @apply w-[74px]; }
@@ -126,7 +126,7 @@
       .tab-button.active { @apply border-zinc-200 bg-white text-zinc-950 shadow-xs; }
       .tab-separator { @apply ml-2.5 self-center border-l border-zinc-300 pl-3 text-[11px] font-semibold uppercase text-zinc-500; }
       .wizard-tab { @apply bg-transparent; }
-      .pager { @apply my-2.5 flex flex-wrap items-end gap-2; }
+      .pager { @apply my-1.5 flex flex-wrap items-end gap-2; }
       .pager label { @apply w-28; }
     }
 
