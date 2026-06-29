@@ -15,7 +15,7 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
     notifyUuid: "0000ffe1-0000-1000-8000-00805f9b34fb",
     writeDelay: "0",
     writeAck: "ignore",
-    writeMode: "pairedResponse",
+    writeMode: "frameResponse",
     writeScope: "all",
     chunkSize: "20",
     serialBaud: "115200",
@@ -25,10 +25,10 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
     rxIdle: "140"
   }));
   const isSerial = settings.transportType === "serial";
-  const setTransport = (value) => () => setSettings((old) => ({ ...old, transportType: value }));
   const stateLabel = connected ? "Connected" : "Disconnected";
   const stateClass = connected ? "on" : "off";
-  return html`<div class="op-col"><h2>Connect Radio</h2>
+  return html`<div class="op-col">
+    <div class="connect-head"><h2>Connect Radio</h2><span class=${`conn-state ${stateClass}`}><span class="dot"></span>${stateLabel}</span></div>
     <div class="connect-card">
       <div class="connect-col">
         <span class="col-head">Radio model</span>
@@ -39,15 +39,14 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
       </div>
       <div class="connect-col">
         <span class="col-head">Connection</span>
-        <div class="seg" role="radiogroup" aria-label="Transport">
-          <button type="button" role="radio" aria-checked=${!isSerial} class=${`seg-btn${isSerial ? "" : " active"}`} disabled=${connected || busy} onClick=${setTransport("ble")}>Bluetooth</button>
-          <button type="button" role="radio" aria-checked=${isSerial} class=${`seg-btn${isSerial ? " active" : ""}`} disabled=${connected || busy} onClick=${setTransport("serial")}>USB</button>
-        </div>
-        <span class=${`conn-state ${stateClass}`}><span class="dot"></span>${stateLabel}</span>
+        <select value=${settings.transportType || "ble"} onChange=${update("transportType")} disabled=${connected || busy}>
+          <option value="ble">Bluetooth</option>
+          <option value="serial">USB serial</option>
+        </select>
       </div>
     </div>
     <div class="actions connect-actions">
-      <button onClick=${connect} disabled=${connected}>${isSerial ? "Connect Serial" : "Connect Bluetooth"}</button>
+      <button onClick=${connect} disabled=${connected}>Connect</button>
       <button class="secondary" onClick=${probe} disabled=${!connected || busy}>Test</button>
       <button class="secondary" onClick=${disconnect} disabled=${!connected || busy}>Disconnect</button>
     </div>
@@ -79,6 +78,8 @@ export function ConnectionPanel({ settings, setSettings, connected, busy, connec
 
 export function OperationsPanel({ canUseTransport, busy, readChannels, writeBack, stop, loadDefaults, exportYaml, importYaml, exportRawBin, importRawBin, progress, settings, setSettings }) {
   const update = (key) => (event) => setSettings((old) => ({ ...old, [key]: event.target.value }));
+  const serialWriteMode = settings.transportType === "serial";
+  const writeMode = serialWriteMode && ["pairedResponse", "paired", "wholeResponse", "whole"].includes(settings.writeMode) ? "frameResponse" : settings.writeMode || "frameResponse";
   const percent = Math.max(0, Math.min(100, Math.round((Number(progress.value || 0) / Math.max(1, Number(progress.max || 1))) * 100)));
   return html`<div class="op-col"><h2>Read / Write / Import / Export</h2>
     <div class="actions">
@@ -92,14 +93,16 @@ export function OperationsPanel({ canUseTransport, busy, readChannels, writeBack
       <summary>Advanced operations</summary>
       <div class="grid">
         <label>Write Mode
-          <select value=${settings.writeMode || "pairedResponse"} onChange=${update("writeMode")}>
-            <option value="pairedResponse">Paired 128-byte frame, GATT response chunks</option>
-            <option value="paired">Paired 128-byte frame, no-response chunks</option>
-            <option value="wholeResponse">Whole frame, 20-byte GATT response chunks</option>
-            <option value="whole">Whole frame, 20-byte no-response chunks</option>
+          <select value=${writeMode} onChange=${update("writeMode")}>
             <option value="frameResponse">Legacy split command/data, GATT response write</option>
             <option value="frameResponseSlow">Legacy split command/data, GATT response write, slow</option>
             <option value="frame">Legacy split command/data, no response write</option>
+            ${serialWriteMode ? null : html`
+              <option value="pairedResponse">Paired 128-byte frame, GATT response chunks</option>
+              <option value="paired">Paired 128-byte frame, no-response chunks</option>
+              <option value="wholeResponse">Whole frame, 20-byte GATT response chunks</option>
+              <option value="whole">Whole frame, 20-byte no-response chunks</option>
+            `}
             <option value="paced">Paced UART, no response writes</option>
             <option value="uart">Fast UART, no response writes</option>
             <option value="response">GATT response writes</option>

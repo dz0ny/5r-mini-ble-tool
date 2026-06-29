@@ -8,7 +8,6 @@ export function PmrWizardTab({ updateBlocks, pmrTone, setPmrTone, pmrStartSlot, 
   const pmrStart = Math.max(1, Math.min(channelCapacity - PMR_CHANNELS.length + 1, Number(pmrStartSlot || 1)));
   const pmrEnd = pmrStart + PMR_CHANNELS.length - 1;
   const applyPmrPreset = () => {
-    if (!confirm(`Overwrite channel slots ${pmrStart}-${pmrEnd} with the 16 PMR446 channels?`)) return;
     updateBlocks((b) => fillPmrChannels(b, pmrStart, pmrTone, {
       namePrefix: pmrNamePrefix,
       power: pmrPower,
@@ -49,7 +48,6 @@ export function BatchWizardTab({ blocks, updateBlocks, batchTarget, setBatchTarg
       setStatus("No populated channels match the batch target", "err");
       return;
     }
-    if (!confirm(`Apply batch changes to ${targets.length} populated channel slots?`)) return;
     try {
       updateBlocks((b) => {
         targets.forEach((channel) => {
@@ -136,7 +134,6 @@ export function CallingWizardTab({ blocks, updateBlocks, callingTarget, setCalli
       setStatus("No channels match the DTMF calling target", "err");
       return;
     }
-    if (!confirm(`Apply DTMF calling to ${targets.length} channel slots?`)) return;
     updateBlocks((b) => {
       targets.forEach((channel) => {
         updateChannelField(b, channel.channel, "signaling", callingSignalCode);
@@ -153,7 +150,6 @@ export function CallingWizardTab({ blocks, updateBlocks, callingTarget, setCalli
       setStatus("No fleet rows to apply", "err");
       return;
     }
-    if (!confirm(`Create ${fleetRows.length} call channels on ${fleetFrequency} MHz and label DTMF members ${memberStart}-${memberStart + fleetRows.length - 1}?`)) return;
     try {
       updateBlocks((b) => {
         updateMemoryField(b, "dtmfSequence", 0xa000, fleetOwnAni, 3);

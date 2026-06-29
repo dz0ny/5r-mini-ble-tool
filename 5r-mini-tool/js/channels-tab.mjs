@@ -74,11 +74,9 @@ export function ChannelsTab({ blocks, setBlocks, pageStart, setPageStart }) {
   const jumpIndex = () => Math.max(0, Math.min(count - 1, Number(jumpSlot || 1) - 1));
   const clearJumpChannel = () => {
     const index = jumpIndex();
-    if (!confirm(`Clear channel slot ${index + 1} in the local memory image? Nothing is written to the radio until you use Write.`)) return;
     setBlocks((old) => { const next = cloneBlocks(old); clearChannel(next, index); return next; });
   };
   const clearEveryChannel = () => {
-    if (!confirm(`Clear all ${count} channel slots in the local memory image? Settings, VFO, and DTMF members are kept. Nothing is written to the radio until you use Write.`)) return;
     setBlocks((old) => { const next = cloneBlocks(old); clearAllChannels(next); return next; });
     setPageStart(0);
   };

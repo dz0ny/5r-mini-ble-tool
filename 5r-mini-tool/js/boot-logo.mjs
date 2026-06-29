@@ -55,6 +55,7 @@ export function parseBootPacket(bytes) {
 }
 
 export async function flashBootLogo({ transport, payload, target, log, setStatus, setProgress, stopRequested }) {
+  if (transport.kind !== "serial") throw new Error("Boot logo writing requires USB serial");
   const expectedLength = target.width * target.height * 2;
   if (payload.length !== expectedLength) throw new Error(`Boot logo payload must be ${expectedLength} bytes`);
   const total = payload.length / CHUNK;
@@ -79,7 +80,7 @@ export async function flashBootLogo({ transport, payload, target, log, setStatus
   setProgress({ value: total + 4, max: total + 4, text: "Boot logo write sent" });
 }
 
-export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgress, stopRequested, log }) {
+export function BootLogoTab({ connected, busy, transportType, getTransport, setStatus, setProgress, stopRequested, log }) {
   const canvasRef = useRef(null);
   const pendingPreviewRef = useRef(null);
   const saved = loadBootLogoPrefs();
@@ -97,6 +98,7 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
   const [invertPixels, setInvertPixels] = useState(Boolean(saved.invertPixels));
   const [message, setMessage] = useState("Enter a radio name or choose an image to build a boot-logo payload.");
   const bootTarget = getBootTarget(bootTargetKey);
+  const canWriteBootLogo = transportType === "serial";
 
   useEffect(() => {
     saveBootLogoPrefs({ armed, bgBottom, bgTop, bootTargetKey, designKey, iconText, invertPixels, logoText, pixelFormat, subText });
@@ -204,7 +206,6 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
       setStatus("Arm boot-logo write first", "err");
       return;
     }
-    if (!confirm(`Boot-logo write will send ${payload.length} bytes using ${bootTarget.name}. Continue?`)) return;
     try {
       await flashBootLogo({ transport: getTransport(), payload, target: bootTarget, log, setStatus, setProgress, stopRequested });
     } catch (error) {
@@ -224,7 +225,7 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
         <div class="wizard-grid">
           <div class="wizard-step boot-text-tool"><strong>1. Make text logo</strong><p>Enter a radio name, choose a visual design, and render it into the preview. Pick the Custom design to set your own emoji/text icon and background colors.</p><label>Main text<input value=${logoText} maxlength="18" onInput=${(e) => { setLogoText(e.target.value); renderTextLogo({ silent: true, mainText: e.target.value }); }} /></label><label>Small text<input value=${subText} maxlength="18" onInput=${(e) => { setSubText(e.target.value); renderTextLogo({ silent: true, smallText: e.target.value }); }} /></label><label>Design<select value=${designKey} onChange=${(e) => updateDesign(e.target.value)}>${LOGO_DESIGNS.map((design) => html`<option value=${design.key}>${design.name}</option>`)}</select></label>${designKey === "custom" ? html`<label>Symbol / emoji<input value=${iconText} maxlength="12" placeholder="📻 or text" onInput=${(e) => { setIconText(e.target.value); renderTextLogo({ silent: true, glyph: e.target.value }); }} /></label><div class="bg-pickers"><label>Background top<input type="color" value=${bgTop} onInput=${(e) => { setBgTop(e.target.value); renderTextLogo({ silent: true, bgStart: e.target.value }); }} /></label><label>Background bottom<input type="color" value=${bgBottom} onInput=${(e) => { setBgBottom(e.target.value); renderTextLogo({ silent: true, bgEnd: e.target.value }); }} /></label></div>` : ""}<button class="secondary" type="button" onClick=${() => renderTextLogo()}>Render Text Logo</button><button class="secondary" type="button" onClick=${renderColorBars}>Render Color Bars</button></div>
           <div class="wizard-step"><strong>2. Export first</strong><p>Choose the pixel format, then export a copy before flashing.</p><label>Pixel format<select value=${pixelFormat} onChange=${(e) => updateFormat(e.target.value)}><option value="rgb565le">RGB565 little-endian</option><option value="rgb565be">RGB565 big-endian</option><option value="bgr565le">BGR565 little-endian</option><option value="bgr565be">BGR565 big-endian</option></select></label><label class="check"><input type="checkbox" checked=${invertPixels} onChange=${(e) => updateFormat(pixelFormat, e.target.checked)} />Invert pixels</label><button class="secondary" type="button" disabled=${!payload} onClick=${exportRaw}>Export RGB565</button><button class="secondary" type="button" disabled=${!payload} onClick=${exportPng}>Export Preview PNG</button></div>
-          <div class="wizard-step"><strong>3. Write to radio</strong><p>Select the target profile first. Changing it resizes the preview and rebuilds the payload.</p><label>Boot target<select value=${bootTargetKey} onChange=${(e) => updateBootTarget(e.target.value)}>${BOOT_TARGETS.map((target) => html`<option value=${target.key}>${target.name}</option>`)}</select></label><label class="check"><input type="checkbox" checked=${armed} onChange=${(e) => setArmed(e.target.checked)} /> Arm boot-logo write</label><button class="danger" type="button" disabled=${!payload || !connected || busy || !armed} onClick=${writeLogo}>Write Boot Logo</button></div>
+          <div class="wizard-step"><strong>3. Write to radio</strong><p>Boot-logo flashing is available over USB serial only.</p><label>Boot target<select value=${bootTargetKey} onChange=${(e) => updateBootTarget(e.target.value)}>${BOOT_TARGETS.map((target) => html`<option value=${target.key}>${target.name}</option>`)}</select></label><label class="check"><input type="checkbox" checked=${armed} disabled=${!canWriteBootLogo} onChange=${(e) => setArmed(e.target.checked)} /> Arm boot-logo write</label><button class="danger" type="button" disabled=${!payload || !connected || busy || !armed || !canWriteBootLogo} onClick=${writeLogo}>Write Boot Logo</button></div>
         </div>
       </div>
     </div>
@@ -234,16 +235,6 @@ export function BootLogoTab({ connected, busy, getTransport, setStatus, setProgr
 async function sendBootCommand(transport, cmd, packageId, payload, name, log, { timeout = 8000 } = {}) {
   const packet = buildBootPacket(cmd, packageId, payload);
   transport.clearQueue();
-  const serialFrame = transport.kind === "serial";
-  // The radio returns framed A5/CRC acks over the serial UART, but its BLE bridge
-  // does not surface them reliably (PROGRAM never answers and the flow stalls).
-  // So over BLE we fire-and-forget the boot commands, pacing only by chunk delay,
-  // which is the flow that historically produced correct BLE writes.
-  if (!serialFrame) {
-    await transport.sendBytes(packet, { expect: [], responseLength: 0, name, chunkSize: 20, chunkDelay: 20, writeWithResponse: true, compactLog: true, logChunks: true });
-    log(`${name}: sent (BLE, no response wait)`);
-    return new Uint8Array();
-  }
   let response = await transport.sendBytes(packet, { expect: [0xa5], responseLength: 8, name, timeout, chunkSize: "frame", chunkDelay: 0, writeWithResponse: true, compactLog: true, logChunks: true, logResponse: true });
   if (response.length >= 6) {
     const need = 8 + ((response[4] << 8) | response[5]);

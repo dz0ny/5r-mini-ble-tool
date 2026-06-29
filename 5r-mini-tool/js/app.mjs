@@ -1,22 +1,52 @@
-import { html, render, useRef, useState } from "./preact.mjs?v=ani-sync";
+import { html, render, useEffect, useRef, useState } from "./preact.mjs?v=ani-sync";
 import { BleTransport } from "./ble-transport.mjs?v=boot-targets";
-import { BootLogoTab } from "./boot-logo.mjs?v=boot-ble-fix";
+import { BootLogoTab } from "./boot-logo.mjs?v=no-prompts";
 import { hexAddr, sleep } from "./format.mjs?v=ani-sync";
 import { PROTOCOL } from "./protocol.mjs?v=multimodel";
 import { blockPayload, buildDefaultBlocks, cloneBlocks, countBlocks, normalizeBlock, validateBlocks } from "./memory.mjs?v=ani-sync";
-import { ChannelsTab } from "./channels-tab.mjs?v=plain-channels-heading";
+import { ChannelsTab } from "./channels-tab.mjs?v=no-confirm";
 import { RawTab } from "./components.mjs?v=ani-sync";
 import { DtmfTab } from "./dtmf-tab.mjs?v=ani-sync";
 import { applyProvisionYaml, blocksFromRawBin, blocksToRawBin, buildProvisionYaml } from "./import-export.mjs?v=ani-sync";
-import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=combined-panel";
+import { ConnectionPanel, OperationsPanel } from "./panels.mjs?v=serial-write-fix";
 import { SerialTransport } from "./serial-transport.mjs?v=serial-close";
 import { SettingsTab } from "./settings-tab.mjs?v=settings-redesign";
 import { Tabs } from "./tabs.mjs?v=boot-logo";
 import { VfoTab } from "./vfo-tab.mjs?v=ani-sync";
 import { getWriteAddresses, getWriteGroups } from "./write-plan.mjs?v=ani-sync";
-import { BatchWizardTab, CallingWizardTab, PmrWizardTab } from "./wizards.mjs?v=wizard-batch";
+import { BatchWizardTab, CallingWizardTab, PmrWizardTab } from "./wizards.mjs?v=no-confirm";
 
 const DEFAULT_BLOCKS = buildDefaultBlocks();
+const SETTINGS_KEY = "5r-mini-tool-settings";
+const DEFAULT_SETTINGS = {
+  model: "5rmini",
+  transportType: "ble",
+  serviceUuid: "0000ffe0-0000-1000-8000-00805f9b34fb",
+  nameFilter: "walkie",
+  writeUuid: "0000ffe1-0000-1000-8000-00805f9b34fb",
+  notifyUuid: "0000ffe1-0000-1000-8000-00805f9b34fb",
+  writeDelay: "0",
+  writeAck: "ignore",
+  writeMode: "frameResponse",
+  writeScope: "all",
+  chunkSize: "20",
+  serialBaud: "115200",
+  serialChunkSize: "1024",
+  serialDtr: true,
+  serialRts: true,
+  rxIdle: "140",
+  verboseLog: false
+};
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    if (["pairedResponse", "paired", "wholeResponse", "whole"].includes(saved.writeMode)) saved.writeMode = "frameResponse";
+    return { ...DEFAULT_SETTINGS, ...saved };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
 
 function App() {
   const [blocks, setBlocks] = useState(() => cloneBlocks(DEFAULT_BLOCKS));
@@ -28,25 +58,7 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [progress, setProgress] = useState({ value: 0, max: 1, text: "Idle" });
   const [pageStart, setPageStart] = useState(0);
-  const [settings, setSettings] = useState({
-    model: "5rmini",
-    transportType: "ble",
-    serviceUuid: "0000ffe0-0000-1000-8000-00805f9b34fb",
-    nameFilter: "walkie",
-    writeUuid: "0000ffe1-0000-1000-8000-00805f9b34fb",
-    notifyUuid: "0000ffe1-0000-1000-8000-00805f9b34fb",
-    writeDelay: "0",
-    writeAck: "ignore",
-    writeMode: "pairedResponse",
-    writeScope: "all",
-    chunkSize: "20",
-    serialBaud: "115200",
-    serialChunkSize: "1024",
-    serialDtr: true,
-    serialRts: true,
-    rxIdle: "140",
-    verboseLog: false
-  });
+  const [settings, setSettings] = useState(loadSettings);
   const [memberPrefix, setMemberPrefix] = useState("R");
   const [memberStartId, setMemberStartId] = useState("101");
   const [pmrTone, setPmrTone] = useState("OFF");
@@ -89,6 +101,10 @@ function App() {
   const stopRequested = useRef(false);
   const transport = useRef(null);
 
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
+
   const setStatus = (text, type = "") => setStatusState({ text, type });
   const log = (message) => setLogText((old) => `${old}[${new Date().toLocaleTimeString()}] ${message}\n`);
   const updateBlocks = (mutator) => setBlocks((old) => { const next = cloneBlocks(old); mutator(next); return next; });
@@ -129,7 +145,7 @@ function App() {
   async function runSetup() {
     const tx = getTransport();
     tx.clearQueue();
-    for (const step of PROTOCOL.setup) await tx.sendBytes(step.send, { expect: step.expect, name: step.name, timeout: 2500 });
+    for (const step of PROTOCOL.setup) await tx.sendBytes(step.send, { expect: step.expect, responseLength: step.responseLength, name: step.name, timeout: 2500 });
   }
 
   async function probeHandshake() {
@@ -189,19 +205,21 @@ function App() {
       setProgress({ value: 0, max: 1, text: "No changed blocks" });
       return;
     }
-    if (!confirm(`Write ${total} block${total === 1 ? "" : "s"} back to the radio?`)) return;
+    const isSerial = settings.transportType === "serial";
     const waitForAck = settings.writeAck === "wait";
-    const writeMode = settings.writeMode || "pairedResponse";
+    const requestedWriteMode = settings.writeMode || "frameResponse";
+    const writeMode = isSerial && ["pairedResponse", "paired", "wholeResponse", "whole"].includes(requestedWriteMode) ? "serialSafe" : requestedWriteMode;
     const writeProfiles = {
       pairedResponse: { blockDelay: 0, chunkDelay: 20, chunkSize: 20, disconnectDelay: 1000, exitDelay: 1000, pairFrame: true, setupDelay: 450, timeout: 10000, writeWithResponse: true },
       paired: { blockDelay: 0, chunkDelay: 20, chunkSize: 20, disconnectDelay: 1000, exitDelay: 1000, pairFrame: true, setupDelay: 450, timeout: 10000, writeWithResponse: false },
       wholeResponse: { blockDelay: 0, chunkDelay: 20, chunkSize: 20, disconnectDelay: 1000, exitDelay: 1000, setupDelay: 450, timeout: 10000, wholeFrame: true, writeWithResponse: true },
       whole: { blockDelay: 0, chunkDelay: 20, chunkSize: 20, disconnectDelay: 1000, exitDelay: 1000, setupDelay: 450, timeout: 10000, wholeFrame: true, writeWithResponse: false },
       frame: { blockDelay: 180, chunkDelay: 0, chunkSize: "frame", disconnectDelay: 1000, exitDelay: 1000, setupDelay: 350, timeout: 10000, writeWithResponse: false },
-      frameResponse: { blockDelay: 0, chunkDelay: 0, chunkSize: "frame", disconnectDelay: 1000, exitDelay: 1000, setupDelay: 450, timeout: 10000, writeWithResponse: true },
+      frameResponse: { blockDelay: 120, chunkDelay: 0, chunkSize: "frame", disconnectDelay: 1000, exitDelay: 1000, setupDelay: 450, timeout: 10000, writeWithResponse: true },
       frameResponseSlow: { blockDelay: 1500, chunkDelay: 0, chunkSize: "frame", disconnectDelay: 2000, exitDelay: 3000, setupDelay: 1000, timeout: 10000, writeWithResponse: true },
       paced: { blockDelay: 90, chunkDelay: 25, disconnectDelay: 1000, exitDelay: 1000, setupDelay: 350, timeout: 10000, writeWithResponse: false },
       response: { blockDelay: 80, chunkDelay: 20, disconnectDelay: 1000, exitDelay: 1000, setupDelay: 350, timeout: 10000, writeWithResponse: true },
+      serialSafe: { blockDelay: 120, chunkDelay: 0, chunkSize: "frame", disconnectDelay: 1000, exitDelay: 1000, setupDelay: 350, timeout: 10000, writeWithResponse: true },
       uart: { blockDelay: 35, chunkDelay: 0, disconnectDelay: 1000, exitDelay: 1000, setupDelay: 250, timeout: 6500, writeWithResponse: false }
     };
     const writeProfile = writeProfiles[writeMode] || writeProfiles.paced;
@@ -210,7 +228,7 @@ function App() {
     try {
       setBusy(true); stopRequested.current = false; setProgress({ value: 0, max: total, text: "Starting write" });
       log(`Write target=${writeScope}, blocks=${total}, mode=${writeMode}, ack=${waitForAck ? "wait" : "ignore"}`);
-      if (writeScope === "all" && writeProfile.pairFrame) log("Final paired write uses A1C0 as filler after A180");
+      if (writeProfile.pairFrame) log("Paired write sends two 64-byte blocks per command");
       else if (writeScope === "all") log("A1C0 is read by Ola but not included in its write protocol");
       await runSetup(); setupComplete = true; await sleep(writeProfile.setupDelay);
       for (const group of getWriteGroups(writeAddresses, writeProfile)) {
@@ -305,7 +323,7 @@ function App() {
       ${tab === "vfo" && html`<${VfoTab} blocks=${blocks} updateBlocks=${updateBlocks} />`}
       ${tab === "settings" && html`<${SettingsTab} blocks=${blocks} updateBlocks=${updateBlocks} />`}
       ${tab === "contacts" && html`<${DtmfTab} blocks=${blocks} updateBlocks=${updateBlocks} memberPrefix=${memberPrefix} setMemberPrefix=${setMemberPrefix} memberStartId=${memberStartId} setMemberStartId=${setMemberStartId} setStatus=${setStatus} />`}
-      ${tab === "bootLogo" && html`<${BootLogoTab} connected=${connected} busy=${busy} getTransport=${getTransport} setStatus=${setStatus} setProgress=${setProgress} stopRequested=${stopRequested} log=${log} />`}
+      ${tab === "bootLogo" && html`<${BootLogoTab} connected=${connected} busy=${busy} transportType=${settings.transportType} getTransport=${getTransport} setStatus=${setStatus} setProgress=${setProgress} stopRequested=${stopRequested} log=${log} />`}
       ${tab === "raw" && html`<${RawTab} logText=${logText} />`}
     </main>`;
 }

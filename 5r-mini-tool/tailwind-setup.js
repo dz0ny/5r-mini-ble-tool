@@ -39,25 +39,24 @@
 
       .connection-card { @apply mb-3 flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5; }
       .connection-card strong { @apply text-sm font-semibold; }
-      .connect-card { @apply mb-2.5 grid grid-cols-2 gap-5; }
+      .connect-head { @apply mb-2 flex items-center justify-between gap-2; }
+      .connect-head h2 { @apply mb-0; }
+      .connect-card { @apply mb-2 grid grid-cols-[minmax(260px,1fr)_150px] items-start gap-2.5; }
       .connect-col { @apply grid content-start gap-1; }
       .col-head { @apply text-[11px] font-semibold uppercase tracking-wide text-zinc-500; }
       .col-meta { @apply text-[11px] leading-snug text-zinc-400; }
-      .seg { @apply grid grid-cols-2 gap-0.5 rounded-md border border-zinc-200 bg-zinc-100 p-0.5; }
-      .seg-btn { @apply min-h-7 rounded border-transparent bg-transparent px-2 py-1 text-xs font-medium text-zinc-500 shadow-none transition hover:bg-white hover:text-zinc-900; }
-      .seg-btn.active { @apply bg-white text-zinc-950 shadow-xs hover:bg-white; }
-      .seg-btn:disabled { @apply cursor-not-allowed bg-transparent text-zinc-400 shadow-none hover:bg-transparent; }
-      .seg-btn.active:disabled { @apply bg-white text-zinc-500; }
-      .conn-state { @apply inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500; }
+      .connect-card select { @apply h-8 px-2 py-1 text-sm; }
+      .conn-state { @apply inline-flex min-h-7 items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2 text-xs font-medium text-zinc-500; }
       .conn-state .dot { @apply h-2 w-2 rounded-full bg-zinc-400; }
-      .conn-state.on { @apply text-green-700; }
+      .conn-state.on { @apply border-green-200 bg-green-50 text-green-700; }
       .conn-state.on .dot { @apply bg-green-500; }
       .connect-ops { @apply p-3.5; }
       .connect-ops h2 { @apply mb-2; }
       .connect-ops .split { @apply items-stretch gap-5; }
       .connect-ops .op-col + .op-col { @apply border-l border-zinc-200 pl-5; }
       .connect-ops .advanced-panel { @apply mt-2.5; }
-      .connect-actions { @apply mt-0.5; }
+      .connect-actions { @apply mt-0.5 gap-1.5; }
+      .connect-actions button { @apply min-h-8 px-2.5 py-1.5 text-xs; }
       .advanced-panel { @apply mt-3 text-zinc-500; }
       .advanced-panel summary { @apply cursor-pointer text-sm font-medium text-zinc-700; }
       .advanced-panel .grid, .advanced-actions, .progress { @apply mt-3; }
